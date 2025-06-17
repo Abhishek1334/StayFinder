@@ -5,10 +5,11 @@ import { createStripeSession } from '@/api/paymentApi';
 
 interface PayNowButtonProps {
   bookingId: string;
+  totalPrice: number;
   className?: string;
 }
 
-export const PayNowButton = ({ bookingId, className }: PayNowButtonProps) => {
+export const PayNowButton = ({ bookingId, totalPrice, className }: PayNowButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePayment = async () => {
@@ -29,7 +30,7 @@ export const PayNowButton = ({ bookingId, className }: PayNowButtonProps) => {
       disabled={isLoading}
       className={className}
     >
-      {isLoading ? "Processing..." : "Pay Now"}
+      {isLoading ? "Processing..." : `Pay $${totalPrice}`}
     </Button>
   );
 };

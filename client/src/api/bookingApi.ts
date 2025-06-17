@@ -26,7 +26,7 @@ export interface Booking {
   };
 }
 
-export const getMyBookings = async (): Promise<Booking[]> => {
+export const getMyBookings = async (): Promise<ApiResponse<{ bookings: Booking[] }>> => {
   const response = await axios.get('/bookings/me');
   return response.data;
 };
@@ -46,7 +46,7 @@ export const cancelBooking = async (id: string): Promise<ApiResponse<{ booking: 
   return response.data;
 };
 
-export const getHostBookings = async (): Promise<Booking[]> => {
+export const getHostBookings = async (): Promise<ApiResponse<{ bookings: Booking[] }>> => {
   const response = await axios.get('/bookings/host');
   return response.data;
 };
