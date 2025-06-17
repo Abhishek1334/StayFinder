@@ -1,130 +1,82 @@
 import { useEffect, useState } from "react";
+import { getHostBookings } from "@/api/bookingApi";
+import { Booking } from "@/types/booking";
 import { toast } from "sonner";
-import { getHostBookings, updateBookingStatus, cancelBooking, Booking } from "@/api/bookingApi";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
-import { MapPin } from "lucide-react";
+import { MapPin, Bed, Bath, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export default function HostBookings() {
+export default function HostBooking() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         const res = await getHostBookings();
-        setBookings(res);
-      } catch (err) {
-        toast.error("Failed to load host bookings");
+        setBookings(res.data.bookings);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to fetch bookings");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
+
     fetchBookings();
   }, []);
 
-  const handleStatusChange = async (id: string, status: Booking['status']) => {
-    try {
-      const res = await updateBookingStatus(id, status);
-      setBookings((prev) =>
-        prev.map((b) => (b._id === id ? { ...b, status: res.data.booking.status } : b))
-      );
-      toast.success(`Booking marked as ${status}`);
-    } catch (err) {
-      toast.error("Failed to update status");
-    }
-  };
-
-  const handleCancel = async (id: string) => {
-    try {
-      await cancelBooking(id);
-      setBookings((prev) =>
-        prev.map((b) =>
-          b._id === id ? { ...b, status: "cancelled" } : b
-        )
-      );
-      toast.success("Booking cancelled");
-    } catch (err) {
-      toast.error("Could not cancel booking");
-    }
-  };
-
-  if (loading) return <p className="p-8">Loading bookings...</p>;
-  if (!bookings.length)
+  if (isLoading) {
     return (
-      <div className="p-8">
-        <h2 className="text-xl font-semibold">No bookings found for your listings.</h2>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Host Bookings</h1>
-      <div className="grid gap-6">
-        {bookings.map((booking) => (
-          <Card key={booking._id}>
-            <CardHeader>
-              <CardTitle>{booking.listing.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-gray-600 flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                {booking.listing.location}
+      {bookings.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">No bookings found</p>
+          <Button asChild>
+            <Link to="/listings">View Your Listings</Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {bookings.map((booking) => (
+            <div
+              key={booking._id}
+              className="bg-card rounded-lg shadow-sm p-6 border"
+            >
+              <h3 className="font-semibold mb-2">{booking.listing.title}</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {new Date(booking.startDate).toLocaleDateString()} -{" "}
+                {new Date(booking.endDate).toLocaleDateString()}
+              </p>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">
+                  ${booking.totalPrice}
+                </span>
+                <span
+                  className={`text-sm px-2 py-1 rounded-full ${
+                    booking.status === "confirmed"
+                      ? "bg-green-100 text-green-800"
+                      : booking.status === "cancelled"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                >
+                  {booking.status.charAt(0).toUpperCase() +
+                    booking.status.slice(1)}
+                </span>
               </div>
-              <div className="text-sm">
-                <p>
-                  <strong>Guest:</strong> {booking.guests} guests
-                </p>
-                <p>
-                  <strong>Dates:</strong>{" "}
-                  {format(new Date(booking.startDate), "MMM d")} -{" "}
-                  {format(new Date(booking.endDate), "MMM d, yyyy")}
-                </p>
-                <p>
-                  <strong>Total:</strong> ${booking.totalPrice}
-                </p>
-                <p>
-                  <strong>Status:</strong>{" "}
-                  <span className="capitalize">{booking.status}</span>
-                </p>
-                <p>
-                  <strong>Payment Status:</strong>{" "}
-                  <span className="capitalize">{booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}</span>
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4">
-                {booking.status !== "cancelled" && (
-                  <>
-                    <Select
-                      defaultValue={booking.status}
-                      onValueChange={(value) =>
-                        handleStatusChange(booking._id, value as Booking["status"])
-                      }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleCancel(booking._id)}
-                    >
-                      Cancel Booking
-                    </Button>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

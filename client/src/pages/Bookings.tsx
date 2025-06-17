@@ -1,57 +1,58 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getMyBookings, cancelBooking, type Booking } from "@/api/bookingApi";
+import { useEffect, useState } from "react";
+import { getMyBookings } from "@/api/bookingApi";
+import { Booking } from "@/types/booking";
+import { PayNowButton } from "@/components/listing/PayNowButton";
+import { ApiResponse } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { MapPin, Bed, Bath, Users } from "lucide-react";
-import { PayNowButton } from "@/components/listing/PayNowButton";
 
 export default function Bookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-
-  const fetchBookings = async () => {
-    try {
-      const res = await getMyBookings();
-      setBookings(res);
-    } catch (err) {
-      toast.error("Failed to load bookings.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const location = useLocation();
 
   useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await getMyBookings();
+        setBookings(res.data.bookings);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || "Failed to fetch bookings");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchBookings();
   }, []);
 
   useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const paymentStatus = params.get("payment_status");
-  const bookingId = params.get("booking_id");
+    const params = new URLSearchParams(location.search);
+    const paymentStatus = params.get("payment_status");
+    const bookingId = params.get("booking_id");
 
-  if (paymentStatus && bookingId) {
-    if (paymentStatus === "success") {
-      toast.success("Payment successful! Your booking has been confirmed.");
-      fetchBookings();
-    } else if (paymentStatus === "cancelled") {
-      toast.error("Payment was cancelled.");
-    } else if (paymentStatus === "error") {
-      toast.error("Payment failed. Please try again.");
+    if (paymentStatus && bookingId) {
+      if (paymentStatus === "success") {
+        toast.success("Payment successful! Your booking has been confirmed.");
+        fetchBookings();
+      } else if (paymentStatus === "cancelled") {
+        toast.error("Payment was cancelled.");
+      } else if (paymentStatus === "error") {
+        toast.error("Payment failed. Please try again.");
+      }
+
+      // Clean up the URL after showing toast
+      const newSearchParams = new URLSearchParams(location.search);
+      newSearchParams.delete("payment_status");
+      newSearchParams.delete("booking_id");
+      navigate(location.pathname + "?" + newSearchParams.toString(), { replace: true });
     }
-
-    // Clean up the URL after showing toast
-    const newSearchParams = new URLSearchParams(location.search);
-    newSearchParams.delete("payment_status");
-    newSearchParams.delete("booking_id");
-    navigate(location.pathname + "?" + newSearchParams.toString(), { replace: true });
-  }
-}, [location.search]);
-
+  }, [location.search]);
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -69,33 +70,22 @@ export default function Bookings() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
-        <div className="grid gap-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (!bookings.length) {
+  if (bookings.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
+        <h1 className="text-3xl font-bold mb-8">Your Bookings</h1>
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-gray-500">You haven't made any bookings yet.</p>
-            <Button asChild className="mt-4">
+            <p className="text-muted-foreground mb-4">No bookings found</p>
+            <Button asChild>
               <Link to="/listings">Browse Listings</Link>
             </Button>
           </CardContent>
@@ -106,81 +96,41 @@ export default function Bookings() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
-      <div className="grid gap-6">
+      <h1 className="text-3xl font-bold mb-8">Your Bookings</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {bookings.map((booking) => (
-          <Card key={booking._id}>
-            <CardHeader>
-              <CardTitle>{booking.listing?.title ?? "Deleted Listing"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="h-4 w-4" />
-                  <span>{booking.listing?.location ?? "Unknown Location"}</span>
-                </div>
-                <div className="flex items-center gap-4 text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Bed className="h-4 w-4" />
-                    <span>{booking.listing?.bedrooms ?? "-"} beds</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Bath className="h-4 w-4" />
-                    <span>{booking.listing?.bathrooms ?? "-"} baths</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{booking.guests ?? "-"} guests</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    <p>
-                      {format(new Date(booking.startDate), "MMM d, yyyy")} -{" "}
-                      {format(new Date(booking.endDate), "MMM d, yyyy")}
-                    </p>
-                    <p className="font-semibold text-black">
-                      ${booking.totalPrice} total
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-medium capitalize border-2 border-gray-300 rounded-md px-2 py-1  ${
-                        booking.status === 'cancelled' ? 'text-red-500' :
-                        booking.status === 'pending' ? 'text-yellow-600' :
-                        'text-green-600'
-                      }`}>
-                        {booking.status}
-                      </span>
-                      <span className={`text-sm font-medium capitalize ml-5 border-2 border-gray-300 rounded-md px-2 py-1 ${
-                        booking.paymentStatus === 'unpaid' ? 'text-red-500' :
-                        booking.paymentStatus === 'paid' ? 'text-yellow-600' :
-                        'text-green-600'
-                      }`}>
-                        {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {booking.paymentStatus === "unpaid" && booking.status === "confirmed" && (
-                      <PayNowButton bookingId={booking._id} totalPrice={booking.totalPrice} />
-                    )}
-                    <Button asChild>
-                      <Link to={`/listings/${booking.listing._id}`}>
-                        View Listing
-                      </Link>
-                    </Button>
-                    {booking.status === "confirmed" && (
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleCancelBooking(booking._id)}
-                      >
-                        Cancel Booking
-                      </Button>
-                    )}
-                  </div>
-                </div>
+          <div
+            key={booking._id}
+            className="bg-card rounded-lg shadow-sm p-6 border"
+          >
+            <h3 className="font-semibold mb-2">{booking.listing.title}</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {new Date(booking.startDate).toLocaleDateString()} -{" "}
+              {new Date(booking.endDate).toLocaleDateString()}
+            </p>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">
+                ${booking.totalPrice}
+              </span>
+              <span
+                className={`text-sm px-2 py-1 rounded-full ${
+                  booking.status === "confirmed"
+                    ? "bg-green-100 text-green-800"
+                    : booking.status === "cancelled"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                {booking.status.charAt(0).toUpperCase() +
+                  booking.status.slice(1)}
+              </span>
+            </div>
+            {booking.status === "confirmed" && booking.paymentStatus === "unpaid" && (
+              <div className="mt-4">
+                <PayNowButton bookingId={booking._id} totalPrice={booking.totalPrice} />
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         ))}
       </div>
     </div>

@@ -1,114 +1,53 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "@/api/axios";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  MapPin, 
-  Users, 
-  Bed, 
-  Bath, 
-  Calendar, 
-  Star, 
-  Edit,
-  Wifi,
-  Waves,
-  Utensils,
-  Car,
-  Snowflake,
-  WashingMachine,
-  Tv,
-  Dumbbell,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  X
-} from "lucide-react";
+import { getListing } from "@/api/listingApi";
 import { Listing } from "@/types/listing";
-import { useAuth } from "@/hooks/useAuth";
-import { EditListingModal } from "@/components/listing/EditListingModal";
-import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { MapPin, Bed, Bath, Users, Wifi, Waves, Utensils, Car, Snowflake, WashingMachine, Tv, Dumbbell, Star, X, ArrowUpDown } from "lucide-react";
+import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { createBooking } from "@/api/bookingApi";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { addDays } from "date-fns";
 import { PayNowButton } from "@/components/listing/PayNowButton";
-import { BookingForm } from "@/components/listing/BookingForm";
 
 interface ListingResponse {
   success: boolean;
   data: {
     listing: Listing;
   };
-  message?: string;
 }
-
-const amenityIcons: Record<string, React.ReactNode> = {
-  wifi: <Wifi className="h-5 w-5 text-indigo-600" />,
-  pool: <Waves className="h-5 w-5 text-indigo-600" />,
-  kitchen: <Utensils className="h-5 w-5 text-indigo-600" />,
-  parking: <Car className="h-5 w-5 text-indigo-600" />,
-  "air-conditioning": <Snowflake className="h-5 w-5 text-indigo-600" />,
-  washer: <WashingMachine className="h-5 w-5 text-indigo-600" />,
-  dryer: <WashingMachine className="h-5 w-5 text-indigo-600" />,
-  tv: <Tv className="h-5 w-5 text-indigo-600" />,
-  gym: <Dumbbell className="h-5 w-5 text-indigo-600" />,
-  elevator: <ArrowUpDown className="h-5 w-5 text-indigo-600" />,
-};
-
-const amenityNames: Record<string, string> = {
-  wifi: "WiFi",
-  pool: "Swimming Pool",
-  kitchen: "Kitchen",
-  parking: "Parking",
-  "air-conditioning": "Air Conditioning",
-  washer: "Washer",
-  dryer: "Dryer",
-  tv: "TV",
-  gym: "Gym",
-  elevator: "Elevator",
-};
 
 export const ListingDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [guests, setGuests] = useState(1);
 
-  const { data: response, isLoading, error, refetch } = useQuery<ListingResponse>({
+  const { data: listingData, isLoading } = useQuery<ListingResponse>({
     queryKey: ["listing", id],
-    queryFn: async () => {
-      if (!id || id === "create") {
-        navigate("/");
-        throw new Error("Invalid listing ID");
-      }
-      try {
-        const response = await axiosInstance.get<ListingResponse>(`listings/${id}`);
-        return response.data;
-      } catch (error) {
-        console.error("Error fetching listing:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch listing details. Please try again.",
-          variant: "destructive",
-        });
-        throw error;
-      }
-    },
-    enabled: !!id && id !== "create",
+    queryFn: () => getListing(id!),
+    enabled: !!id,
   });
 
-  const listing = response?.data?.listing;
-  const isHost = listing?.host?._id === user?._id;
-
-  const handleImageClick = (index: number) => {
-    setSelectedImageIndex(index);
-  };
-
-  const handleCloseImageModal = () => {
-    setSelectedImageIndex(null);
-  };
+  const listing = listingData?.data.listing;
 
   const handlePreviousImage = () => {
     if (selectedImageIndex === null || !listing) return;
@@ -124,207 +63,244 @@ export const ListingDetails = () => {
     );
   };
 
+  const handleBooking = async () => {
+    if (!startDate || !endDate || !listing) return;
+
+    try {
+      const response = await createBooking({
+        listing: listing._id,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        guests,
+      });
+
+      if (response.success) {
+        toast.success("Booking created successfully!");
+        setIsBookingModalOpen(false);
+        navigate("/bookings");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create booking");
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <div className="aspect-video bg-gray-200 rounded-xl animate-pulse" />
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-1/4" />
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid gap-8">
+          <Skeleton className="h-[400px] w-full" />
+          <div className="grid gap-4">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <h2 className="text-2xl font-semibold mb-4">Error Loading Listing</h2>
-        <p className="text-muted-foreground mb-4">
-          There was an error loading the listing details. Please try again later.
-        </p>
-        <Button
-          onClick={() => window.location.reload()}
-          className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700"
-        >
-          Retry
-        </Button>
       </div>
     );
   }
 
   if (!listing) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <h2 className="text-2xl font-semibold mb-4">Listing Not Found</h2>
-        <p className="text-muted-foreground mb-4">
-          The listing you're looking for doesn't exist or has been removed.
-        </p>
-        <Button
-          onClick={() => window.history.back()}
-          className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700"
-        >
-          Go Back
-        </Button>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold">Listing not found</h1>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Image Gallery */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="md:col-span-2 relative group">
-          <img
-            src={listing.images[0]}
-            alt={listing.title}
-            className="w-full h-[400px] object-cover rounded-xl shadow-md cursor-pointer transition-transform hover:scale-[1.02]"
-            onClick={() => handleImageClick(0)}
-          />
-          {listing.images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-              {listing.images.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleImageClick(index)}
-                  className="w-2 h-2 rounded-full bg-white/50 hover:bg-white transition-colors"
-                />
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid gap-8">
+        <div className="relative">
+          <Carousel>
+            <CarouselContent>
+              {listing.images.map((image, index) => (
+                <CarouselItem key={index}>
+                  <img
+                    src={image}
+                    alt={`${listing.title} - Image ${index + 1}`}
+                    className="w-full h-[400px] object-cover rounded-lg"
+                  />
+                </CarouselItem>
               ))}
-            </div>
-          )}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
         </div>
-        {listing.images.slice(1, 5).map((image, index) => (
-          <div key={index} className="relative group">
-          <img
-            src={image}
-            alt={`${listing.title} - Image ${index + 2}`}
-              className="w-full h-[200px] object-cover rounded-xl shadow-md cursor-pointer transition-transform hover:scale-[1.02]"
-              onClick={() => handleImageClick(index + 1)}
-          />
-          </div>
-        ))}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-              {listing.title}
-            </h1>
-            <div className="flex items-center gap-2 text-gray-600">
-              <MapPin className="h-4 w-4" />
-              <span>{listing.location}</span>
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">{listing.title}</h1>
+            <div className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-400" />
+              <span className="font-medium">{listing.rating}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg">
-              <Users className="h-6 w-6 text-indigo-600 mb-2" />
-              <p className="text-sm text-gray-600">Guests</p>
-              <p className="font-semibold text-gray-800">{listing.guests}</p>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            <span>{listing.location}</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <Bed className="h-4 w-4" />
+              <span>{listing.bedrooms} beds</span>
             </div>
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg">
-              <Bed className="h-6 w-6 text-indigo-600 mb-2" />
-              <p className="text-sm text-gray-600">Bedrooms</p>
-              <p className="font-semibold text-gray-800">{listing.bedrooms}</p>
+            <div className="flex items-center gap-1">
+              <Bath className="h-4 w-4" />
+              <span>{listing.bathrooms} baths</span>
             </div>
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg">
-              <Bath className="h-6 w-6 text-indigo-600 mb-2" />
-              <p className="text-sm text-gray-600">Bathrooms</p>
-              <p className="font-semibold text-gray-800">{listing.bathrooms}</p>
-            </div>
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg">
-              <Star className="h-6 w-6 text-indigo-600 mb-2" />
-              <p className="text-sm text-gray-600">Property Type</p>
-              <p className="font-semibold text-gray-800 capitalize">{listing.propertyType}</p>
+            <div className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              <span>Up to {listing.guests} guests</span>
             </div>
           </div>
 
-          <div className="prose max-w-none">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">About this place</h2>
-            <p className="text-gray-600 whitespace-pre-line">{listing.description}</p>
+          <Separator />
+
+          <div className="grid gap-4">
+            <h2 className="text-xl font-semibold">Description</h2>
+            <p className="text-muted-foreground">{listing.description}</p>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Amenities</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {listing.amenities.map((amenity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg"
-                >
-                  {amenityIcons[amenity] || <div className="w-2 h-2 rounded-full bg-indigo-600" />}
-                  <span className="text-gray-700 font-medium">{amenityNames[amenity] || amenity}</span>
+          <div className="grid gap-4">
+            <h2 className="text-xl font-semibold">Amenities</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {listing.amenities.map((amenity) => (
+                <div key={amenity} className="flex items-center gap-2">
+                  {amenity === "wifi" && <Wifi className="h-4 w-4" />}
+                  {amenity === "pool" && <Waves className="h-4 w-4" />}
+                  {amenity === "kitchen" && <Utensils className="h-4 w-4" />}
+                  {amenity === "parking" && <Car className="h-4 w-4" />}
+                  {amenity === "ac" && <Snowflake className="h-4 w-4" />}
+                  {amenity === "washer" && <WashingMachine className="h-4 w-4" />}
+                  {amenity === "tv" && <Tv className="h-4 w-4" />}
+                  {amenity === "gym" && <Dumbbell className="h-4 w-4" />}
+                  <span className="capitalize">{amenity}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-1">
-          {!isHost && (
-            <BookingForm
-              listingId={listing._id}
-              price={listing.price}
-              maxGuests={listing.guests}
-            />
-          )}
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-bold">${listing.price} / night</p>
+              <p className="text-sm text-muted-foreground">Total price will be calculated based on your dates</p>
+            </div>
+            <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+              <DialogTrigger asChild>
+                <Button>Book Now</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Book Your Stay</DialogTitle>
+                  <DialogDescription>
+                    Select your dates and number of guests
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>Dates</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !startDate && "text-muted-foreground"
+                            )}
+                          >
+                            {startDate ? (
+                              format(startDate, "PPP")
+                            ) : (
+                              <span>Start date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={startDate}
+                            onSelect={setStartDate}
+                            disabled={(date) =>
+                              date < new Date() || date > addDays(new Date(), 365)
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !endDate && "text-muted-foreground"
+                            )}
+                          >
+                            {endDate ? (
+                              format(endDate, "PPP")
+                            ) : (
+                              <span>End date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={endDate}
+                            onSelect={setEndDate}
+                            disabled={(date) =>
+                              !startDate ||
+                              date < startDate ||
+                              date > addDays(startDate, 30)
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Guests</Label>
+                    <Select
+                      value={guests.toString()}
+                      onValueChange={(value) => setGuests(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select number of guests" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from(
+                          { length: listing.guests },
+                          (_, i) => i + 1
+                        ).map((num) => (
+                          <SelectItem key={num} value={num.toString()}>
+                            {num} {num === 1 ? "guest" : "guests"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsBookingModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleBooking}>Confirm Booking</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
-
-      {/* Image Modal */}
-      <Dialog open={selectedImageIndex !== null} onOpenChange={handleCloseImageModal}>
-        <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
-          {selectedImageIndex !== null && listing && (
-            <div className="relative">
-              <img
-                src={listing.images[selectedImageIndex]}
-                alt={`${listing.title} - Image ${selectedImageIndex + 1}`}
-                className="w-full h-[80vh] object-contain"
-              />
-              <button
-                onClick={handleCloseImageModal}
-                className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-              >
-                <X className="h-6 w-6" />
-              </button>
-              {listing.images.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePreviousImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </button>
-                  <button
-                    onClick={handleNextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <EditListingModal
-        listing={listing}
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        onSuccess={() => {
-          setEditModalOpen(false);
-          refetch();
-          toast({
-            title: "Success",
-            description: "Listing updated successfully",
-          });
-        }}
-      />
     </div>
   );
 }; 
