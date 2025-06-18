@@ -61,12 +61,11 @@ export const ListingDetails = () => {
         endDate: endDate.toISOString(),
         guests,
       });
-
-      if (res.success) {
+      
+      
         toast.success("Booking successful!");
         setIsBookingModalOpen(false);
         navigate("/bookings");
-      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Booking failed.");
     }

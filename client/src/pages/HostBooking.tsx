@@ -3,8 +3,6 @@ import { getHostBookings } from "@/api/bookingApi";
 import { Booking } from "@/types/booking";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { MapPin, Bed, Bath, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function HostBooking() {

@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, Users, Loader2 } from "lucide-react";
-import { format, isWithinInterval, isSameDay, startOfDay, addDays } from "date-fns";
+import { format, isWithinInterval, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { createBooking } from "@/api/bookingApi";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +36,6 @@ export const BookingForm = ({ listingId, price, maxGuests, }: BookingFormProps) 
       try {
         console.log(listingId);
         const response = await getListingBookings(listingId);
-        console.log(response);
         setBookedDates(response);
       } catch (error) {
         console.error("Failed to fetch booked dates:", error);
@@ -83,7 +82,7 @@ export const BookingForm = ({ listingId, price, maxGuests, }: BookingFormProps) 
 
     setIsLoading(true);
     try {
-      const response = await createBooking({
+      await createBooking({
         listing: listingId,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
@@ -91,7 +90,7 @@ export const BookingForm = ({ listingId, price, maxGuests, }: BookingFormProps) 
       });
 
       toast.success("Booking created successfully!");
-      navigate(`/bookings`);
+      navigate("/bookings");
     } catch (error: any) {
       console.error("Booking failed:", error);
       toast.error(error.response?.data?.message || "Failed to create booking. Please try again.");

@@ -6,12 +6,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-const CarouselContext = React.createContext<{
-  currentSlide: number
-  totalSlides: number
-  setCurrentSlide: (slide: number) => void
-  setTotalSlides: (total: number) => void
-}>({
+interface CarouselContextType {
+  currentSlide: number;
+  totalSlides: number;
+  setCurrentSlide: (slide: number | ((prev: number) => number)) => void;
+  setTotalSlides: (total: number) => void;
+}
+
+const CarouselContext = React.createContext<CarouselContextType>({
   currentSlide: 0,
   totalSlides: 0,
   setCurrentSlide: () => {},
@@ -85,10 +87,10 @@ export function CarouselPrevious({
   className,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { currentSlide, setCurrentSlide, totalSlides } = React.useContext(CarouselContext)
+  const { setCurrentSlide, totalSlides } = React.useContext(CarouselContext)
 
   const handlePrevious = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides)
+    setCurrentSlide((prev: number) => (prev - 1 + totalSlides) % totalSlides)
   }
 
   return (
@@ -112,10 +114,10 @@ export function CarouselNext({
   className,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { currentSlide, setCurrentSlide, totalSlides } = React.useContext(CarouselContext)
+  const { setCurrentSlide, totalSlides } = React.useContext(CarouselContext)
 
   const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides)
+    setCurrentSlide((prev: number) => (prev + 1) % totalSlides)
   }
 
   return (
