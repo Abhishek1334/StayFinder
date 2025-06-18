@@ -61,8 +61,7 @@ export const ListingDetails = () => {
         endDate: endDate.toISOString(),
         guests,
       });
-      
-      
+        console.log(res);
         toast.success("Booking successful!");
         setIsBookingModalOpen(false);
         navigate("/bookings");
