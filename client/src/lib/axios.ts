@@ -12,7 +12,7 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Ensure credentials are included in every request
+    // Ensure credentials are included
     config.withCredentials = true;
     return config;
   },
