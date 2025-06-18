@@ -1,18 +1,19 @@
 import axios from 'axios';
 
-
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  withCredentials: true, // Important for cookies
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // You can add any request modifications here
+    // Ensure credentials are included in every request
+    config.withCredentials = true;
     return config;
   },
   (error) => {
@@ -37,16 +38,11 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // If refresh fails and we're not on the login page, redirect to login
+        // If refresh fails, redirect to login
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
       }
-    }
-
-    // Don't show error toast for 401 errors on login page
-    if (error.response?.status === 401 && window.location.pathname === '/login') {
-      return Promise.reject(error);
     }
 
     return Promise.reject(error);

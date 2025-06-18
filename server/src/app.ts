@@ -30,12 +30,14 @@ app.use(morgan("dev"));
 app.use(cors({
   origin: [
     process.env.CLIENT_URL || "http://localhost:5173",
-    "https://stayfinder-eta.vercel.app"
+    "https://stayfinder-eta.vercel.app",
+    "https://stayfinder.vercel.app"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   exposedHeaders: ["Set-Cookie"],
+  maxAge: 600 // Cache preflight request for 10 minutes
 }));
 
 // Routes
@@ -43,7 +45,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentROutes);
-app.use("/api/webhooks", webhookRoutes);
 
 // Connect to MongoDB
 mongoose

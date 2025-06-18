@@ -1,30 +1,26 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
-import { rootReducer } from './rootReducer';
-
-const persistConfig = {
-  key: 'root',
-  storage,
-  whitelist: ['auth', 'user'], // Only persist auth and user slices
-  blacklist: ['ui'], // Don't persist UI state
-};
-
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+import { configureStore } from "@reduxjs/toolkit";
+import { setupListeners } from "@reduxjs/toolkit/query";
+import authReducer from "./slices/authSlice";
 
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: {
+    auth: authReducer,
+  },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        // Ignore these action types
+        ignoredActions: ["auth/login/fulfilled", "auth/register/fulfilled", "auth/getMe/fulfilled"],
+        // Ignore these field paths in all actions
+        ignoredActionPaths: ["payload.user", "payload.token"],
+        // Ignore these paths in the state
+        ignoredPaths: ["auth.user", "auth.token"],
       },
     }),
-  devTools: process.env.NODE_ENV !== 'production',
 });
 
-export const persistor = persistStore(store);
+// Enable the refetchOnFocus/refetchOnReconnect behaviors
+setupListeners(store.dispatch);
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch; 

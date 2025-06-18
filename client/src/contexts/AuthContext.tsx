@@ -24,15 +24,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       setUser(null);
       
-      // Only show error toast if not on login page
-      if (window.location.pathname !== '/login') {
-        if (error.response?.status === 401) {
-          toast.error("Session expired. Please login again.");
-        } else if (error.response?.status === 403) {
-          toast.error("Access denied. Please login again.");
-        } else {
-          toast.error("Failed to verify authentication. Please try again.");
-        }
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+      } else if (error.response?.status === 403) {
+        toast.error("Access denied. Please login again.");
+      } else {
+        toast.error("Failed to verify authentication. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -123,17 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate]);
 
-  // Check auth state on mount and when the app regains focus
+  // Check auth state on mount
   useEffect(() => {
     checkAuth();
-
-    // Check auth when window regains focus
-    const handleFocus = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
   }, [checkAuth]);
 
   // Add error handling for network issues
