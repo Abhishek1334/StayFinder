@@ -30,21 +30,21 @@ export default function Bookings() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const paymentStatus = params.get("payment_status");
+    const success = params.get("success");
+    const canceled = params.get("canceled");
     const bookingId = params.get("booking_id");
 
-    if (paymentStatus && bookingId) {
-      if (paymentStatus === "success") {
+    if (bookingId) {
+      if (success === "true") {
         toast.success("Payment successful! Your booking has been confirmed.");
         fetchBookings();
-      } else if (paymentStatus === "cancelled") {
+      } else if (canceled === "true") {
         toast.error("Payment was cancelled.");
-      } else if (paymentStatus === "error") {
-        toast.error("Payment failed. Please try again.");
       }
 
       // Clean URL
-      params.delete("payment_status");
+      params.delete("success");
+      params.delete("canceled");
       params.delete("booking_id");
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     }

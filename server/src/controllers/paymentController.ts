@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import Booking from '../models/Booking';
+import { env } from '../config/env';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -8,8 +9,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
     const { bookingId } = req.body;
     console.log('📝 Creating checkout session for booking:', bookingId);
-
-    
 
     const booking = await Booking.findById(bookingId).populate('listing');
     if (!booking) {
@@ -23,7 +22,6 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Booking already paid' });
     }
 
-    
     const listing = booking.listing as any;
     console.log('🏠 Creating session for listing:', listing.title);
 
@@ -43,8 +41,8 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.CLIENT_URL}/bookings?success=true`,
-      cancel_url: `${process.env.CLIENT_URL}/bookings?canceled=true`,
+      success_url: `${env.CLIENT_URL}/bookings?success=true&booking_id=${bookingId}`,
+      cancel_url: `${env.CLIENT_URL}/bookings?canceled=true&booking_id=${bookingId}`,
       metadata: {
         bookingId: booking._id.toString(),
       },
