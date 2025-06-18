@@ -33,7 +33,7 @@ export function DebugHelper() {
     // Monitor network requests
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
-      const [resource, config] = args;
+      const [resource] = args;
       addLog(`Fetch request: ${resource}`);
       
       try {
