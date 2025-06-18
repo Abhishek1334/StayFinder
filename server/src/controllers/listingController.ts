@@ -137,8 +137,6 @@ export const createListing = async (req: AuthRequest, res: Response, next: NextF
       await user.save();
     }
 
-    console.log("BODY:", req.body); // ✅ Good
-    console.log("FILES:", req.files); // ✅ Add this
 
     // Extract image URLs from Cloudinary uploads
     const imageUrls =

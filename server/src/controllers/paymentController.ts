@@ -8,7 +8,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 export const createCheckoutSession = async (req: Request, res: Response) => {
   try {
     const { bookingId } = req.body;
-    console.log('📝 Creating checkout session for booking:', bookingId);
 
     const booking = await Booking.findById(bookingId).populate('listing');
     if (!booking) {

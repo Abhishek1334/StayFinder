@@ -14,7 +14,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      console.log('Checking auth state...');
       const response = await api.get("/auth/me");
       
       if (response.data.success && response.data.data) {
@@ -41,7 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     try {
       setLoading(true);
-      console.log('Attempting login...');
       
       const response = await api.post("/auth/login", {
         email,

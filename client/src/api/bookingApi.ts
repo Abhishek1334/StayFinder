@@ -50,9 +50,9 @@ export const cancelBooking = async (id: string): Promise<ApiResponse<{ booking: 
   return response.data;
 };
 
-export const getHostBookings = async (): Promise<ApiResponse<{ bookings: Booking[] }>> => {
+export const getHostBookings = async (): Promise<{ bookings: Booking[] }> => {
   const response = await axios.get('/bookings/host');
-  return response.data;
+  return response.data; // ✅ FIX: Only return the data part
 };
 
 export const updateBookingStatus = async (
@@ -66,5 +66,5 @@ export const updateBookingStatus = async (
 
 export const getListingBookings = async (listingId: string): Promise<{ startDate: string; endDate: string; }[]> => {
   const response = await axios.get(`/listings/${listingId}/bookings`);
-  return response.data.data;
+  return response.data;
 }; 

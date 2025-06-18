@@ -92,7 +92,6 @@ export const getUserBookings = async (req: AuthRequest, res: Response) => {
       .populate('listing')
       .sort({ createdAt: -1 });
       
-    console.log(bookings);
     return res.json(bookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
@@ -202,15 +201,17 @@ export const getHostBookings = async (req: AuthRequest, res: Response) => {
     // Find all bookings related to these listings
     const bookings = await Booking.find({ listing: { $in: listingIds } })
       .populate('listing')
-      .populate('user', 'name email') // Optional: populate guest info
+      .populate('user', 'name email')
       .sort({ createdAt: -1 });
 
-    return res.json(bookings);
+    // Wrap bookings in an object
+    return res.json({ bookings });
   } catch (error) {
     console.error('Error fetching host bookings:', error);
     return res.status(500).json({ message: 'Error fetching host bookings' });
   }
 };
+
 
 
 export const getListingBookings = async (req: AuthRequest, res: Response) => {

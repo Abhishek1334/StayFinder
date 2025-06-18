@@ -1,105 +1,127 @@
-# 🏠 StayFinder
 
-StayFinder is a full-stack web application similar to Airbnb, enabling users to list and book properties for short-term or long-term stays. Built with modern technologies and best practices, it provides a seamless experience for both property hosts and guests.
+# StayFinder
 
-![StayFinder](https://img.shields.io/badge/StayFinder-Airbnb%20Clone-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+A full-stack web application inspired by Airbnb, built as an internship assignment. StayFinder allows users to list, search, and book properties for short-term or long-term stays. The project demonstrates end-to-end development skills across frontend, backend, and database layers.
 
-## ✨ Features
+**Live Demo:** [https://stayfinder-eta.vercel.app/](https://stayfinder-eta.vercel.app/)
 
-- 🔍 Advanced property search with filters
-- 📱 Responsive design for all devices
-- 🔐 Secure authentication system
-- 📅 Booking management system
-- 💳 Payment integration
-- 🗺️ Location-based search
-- 📸 Image upload and management
+---
+
+## � Features
+
+### User-Facing
+- **Homepage:** Browse property cards with images, location, and price.
+- **Property Details:** View images, descriptions, amenities, and availability calendar.
+- **Search & Filters:** Find listings by location, price, and date.
+- **Authentication:** Register and login with validation.
+- **Booking:** Reserve properties with a simple booking flow.
+- **Profile:** View and manage your bookings.
+
+### Host/Owner
+- **Host Dashboard:** Manage your own listings.
+- **Listing CRUD:** Create, edit, and delete property listings.
+
+### Backend/API
+- **RESTful Endpoints:** For listings, bookings, and authentication.
+- **Database Models:** Users, Listings, Bookings.
+
+### Bonus
+- **Mock Payment Integration:** (e.g., Stripe)
+- **Modern UI/UX:** Inspired by Airbnb, NomadX, and Dribbble designs.
+
+---
 
 ## 🛠️ Tech Stack
 
-### Frontend
-- **React** with **TypeScript** - For robust and type-safe UI development
-- **Vite** - For fast development and optimized builds
-- **TailwindCSS** - For utility-first styling
-- **Shadcn/ui** - For beautiful, accessible components
-- **React Query** - For efficient data fetching and caching
-- **React Router** - For client-side routing
-- **Zustand** - For state management
-- **Axios** - For API requests
+| Layer      | Technology                | Why?                                                                 |
+|------------|---------------------------|----------------------------------------------------------------------|
+| Frontend   | React + TypeScript, Vite  | Fast, type-safe, component-driven UI                                 |
+| Styling    | Tailwind CSS              | Utility-first, rapid styling                                         |
+| State      | Redux Toolkit             | Predictable, scalable state management                               |
+| Backend    | Node.js, Express          | Robust, widely-used for REST APIs                                    |
+| Database   | MongoDB (Mongoose)        | Flexible, JSON-like, easy to seed/test                               |
+| Auth       | JWT, bcrypt               | Secure, stateless authentication                                     |
+| Hosting    | Vercel (frontend), Render (backend) | Simple, scalable deployment                                 |
+---
 
-### Backend
-- **Node.js** with **Express** - For the server framework
-- **TypeScript** - For type safety
-- **MongoDB** - For database
-- **Mongoose** - For MongoDB object modeling
-- **JWT** - For authentication
-- **Cloudinary** - For image storage
-- **Stripe** - For payment processing
-
-
-
-## 📁 Project Structure
+## 📦 Project Structure
 
 ```
-stayfinder/
-├── client/                 # Frontend React application
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── pages/        # Page components
-│   │   ├── hooks/        # Custom hooks
-│   │   ├── services/     # API services
-│   │   └── utils/        # Utility functions
-│   └── public/           # Static files
-│
-└── server/               # Backend Express application
-    ├── src/
-    │   ├── controllers/ # Route controllers
-    │   ├── models/      # Database models
-    │   ├── routes/      # API routes
-    │   ├── middleware/  # Custom middleware
-    │   └── utils/       # Utility functions
-    └── uploads/         # File uploads
+StayFinder/
+  client/      # React frontend (Vite, Tailwind, Redux)
+  server/      # Node.js/Express backend (MongoDB, Mongoose)
 ```
 
-## 🔒 Security Features
+- See `/client/README.md` and `/server/README.md` for more details.
 
-- JWT-based authentication
-- Password hashing with bcrypt
-- Input validation and sanitization
-- CORS protection
-- Secure cookie handling
-- Environment variable protection
+---
 
-## 🚀 Deployment
+## 🧠 Assignment Reflections
 
-The application can be deployed using:
-- Frontend: Vercel, Netlify, or any static hosting
-- Backend: Heroku, DigitalOcean, or AWS
-- Database: MongoDB Atlas
-- File Storage: Cloudinary
+### Tech Stack Choice
 
-## 🤝 Contributing
+- **React + TypeScript:** For type safety, scalability, and a modern developer experience.
+- **Node.js/Express:** Fast prototyping, large ecosystem, and easy integration with MongoDB.
+- **MongoDB:** Flexible schema, ideal for rapid development and prototyping.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Full-Stack Comfort
 
-## 📝 License
+> Yes, I am comfortable building both frontend and backend if UI is provided. I enjoy working across the stack and can quickly adapt to new UI/UX requirements.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Unique Features to Improve Airbnb
 
-## 👥 Authors
+1. **Instant Messaging:** Real-time chat between guests and hosts for faster communication.
+2. **Dynamic Pricing Engine:** Suggest optimal prices to hosts based on demand, seasonality, and local events.
 
-- Your Name - Initial work
+### Security & Scalability
 
-## 🙏 Acknowledgments
+- **Security:** JWT-based authentication, password hashing (bcrypt), input validation, and secure HTTP headers.
+- **Scaling:** Stateless backend (easy to scale horizontally), CDN for static assets, and cloud database (MongoDB Atlas) for high availability.
 
-- Airbnb for inspiration
-- All open-source contributors
-- The React and Node.js communities
+---
 
-## 📞 Support
+## 📄 API Overview
 
-For support, email your-email@example.com or create an issue in the repository. 
+- **Auth:** `POST /api/auth/register`, `POST /api/auth/login`
+- **Listings:** `GET /api/listings`, `GET /api/listings/:id`, `POST /api/listings` (host), `PUT/PATCH/DELETE /api/listings/:id`
+- **Bookings:** `POST /api/bookings`, `GET /api/bookings` (user/host)
+- **Payments:** (Mock/Stripe integration)
+
+See [`API_DOCS.md`](./API_DOCS.md) for full documentation.
+
+-
+
+## 🎨 UI/UX Inspiration
+
+- Airbnb, NomadX, Dribbble, Figma community designs.
+
+---
+
+## 🌍 Deployment
+
+- **Frontend:** [Vercel](https://vercel.com/)
+- **Backend:** [Render](https://render.com/)
+
+---
+
+## �� Acknowledgements
+
+- [Airbnb](https://airbnb.com) for inspiration
+- [Dribbble](https://dribbble.com/) & [Figma](https://figma.com/) for UI ideas
+
+---
+
+## 📫 Contact
+
+For questions or feedback, please open an issue or contact [your-email@example.com].
+
+---
+
+**_Thank you for reviewing StayFinder!_**
+
+---
+
+## 🔗 Portfolio
+
+Check out my portfolio at [https://abhishek-rajoria.vercel.app/](https://abhishek-rajoria.vercel.app/).
+

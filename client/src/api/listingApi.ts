@@ -82,16 +82,13 @@ export const getMyListings = async (): Promise<ApiResponse<{ listings: Listing[]
 };
 
 export const createListing = async (data: CreateListingData): Promise<ApiResponse<{ listing: Listing }>> => {
-  console.log(data);
 
   const response = await axios.post("/listings", data);
   return response.data;
 };
 
 export const updateListing = async (id: string, data: FormData): Promise<ApiResponse<{ listing: Listing }>> => {
-  for (let pair of data.entries()) {
-    console.log(pair[0], pair[1]);
-  } 
+  
   const response = await axios.put(`/listings/${id}`, data, {
     headers: {
       'Content-Type': 'multipart/form-data',

@@ -12,17 +12,19 @@ export default function HostBooking() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await getHostBookings();
-        setBookings(res.data.bookings);
+        const res = await getHostBookings(); 
+        setBookings(res.bookings);
+     
       } catch (error: any) {
         toast.error(error.response?.data?.message || "Failed to fetch bookings");
       } finally {
         setIsLoading(false);
       }
     };
-
+  
     fetchBookings();
   }, []);
+  
 
   if (isLoading) {
     return (

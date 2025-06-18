@@ -77,13 +77,11 @@ export default function EditListing() {
   const handleRemoveImage = (imageUrl: string) => {
   setImagesToDelete((prev) => {
     const updated = [...prev, imageUrl];
-    console.log("Images to delete:", updated); // This will show the correct state
     return updated;
   });
   
   setImages((prev) => {
     const updated = prev.filter((img) => img !== imageUrl);
-    console.log("Remaining images:", updated); // This will show the correct state
     return updated;
   });
 };
@@ -117,7 +115,6 @@ export default function EditListing() {
     });
 
     // Handle images to delete - Debug logging
-    console.log("Images to delete before appending:", imagesToDelete);
     imagesToDelete.forEach((image) => {
       formData.append("imagesToDelete[]", image);
     });
@@ -129,11 +126,7 @@ export default function EditListing() {
       });
     }
 
-    // Debug: Log all FormData entries
-    console.log("FormData entries:");
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
+   
 
     await updateListing(id!, formData);
     toast({

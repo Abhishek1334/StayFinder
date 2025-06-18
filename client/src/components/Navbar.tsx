@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Home, PlusCircle, Building2, Calendar } from "lucide-react";
+import { LogOut, User, Home, PlusCircle, Building2, Calendar, Search, Github, GlobeIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef } from "react";
 
@@ -39,9 +39,18 @@ const Navbar = () => {
     <nav className="border-b">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-4">
           <Link to="/" className="text-xl font-bold">
             StayFinder
           </Link>
+          <Link to="https://github.com/Abhishek1334/StayFinder/" className="text-sm font-bold">
+            <Github className="h-4 w-4" />
+          </Link>
+          <Link to="https://abhishek-rajoria.vercel.app/" className="text-sm font-bold">
+            <GlobeIcon className="h-4 w-4" />
+          </Link>
+
+          </div>
 
           <div className="flex items-center gap-4">
             {loading ? (
@@ -57,6 +66,15 @@ const Navbar = () => {
                     List Your Space
                   </Button>
                 </Link>
+                                
+                <Link to="/listings">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Search className="h-4 w-4" />
+                    Search Listings
+                  </Button>
+                </Link>
+                                          
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">

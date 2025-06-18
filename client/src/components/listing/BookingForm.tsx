@@ -34,7 +34,6 @@ export const BookingForm = ({ listingId, price, maxGuests, }: BookingFormProps) 
   useEffect(() => {
     const fetchBookedDates = async () => {
       try {
-        console.log(listingId);
         const response = await getListingBookings(listingId);
         setBookedDates(response);
       } catch (error) {

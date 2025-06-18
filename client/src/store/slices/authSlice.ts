@@ -51,7 +51,6 @@ export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValu
 export const checkAuth = createAsyncThunk("auth/check", async (_, { rejectWithValue }) => {
   try {
     const response = await authApi.getMe();
-    console.log("check", response);
     return response.data.user;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message || "Auth check failed");
