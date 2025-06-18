@@ -16,7 +16,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('Checking auth state...');
       const response = await api.get("/auth/me");
-      console.log('Auth check response:', response.data);
       
       if (response.data.success && response.data.data) {
         setUser(response.data.data);
@@ -30,18 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Auth check error:', error);
       setUser(null);
       
-      if (error.response?.status === 401) {
-        if (window.location.pathname !== '/login') {
-          navigate('/login');
-        }
-        toast.error("Session expired. Please login again.");
-      } else if (error.response?.status === 403) {
-        if (window.location.pathname !== '/login') {
-          navigate('/login');
-        }
-        toast.error("Access denied. Please login again.");
-      } else {
-        toast.error("Failed to verify authentication. Please try again.");
+      // Don't try to refresh here, let axios interceptor handle it
+      if (window.location.pathname !== '/login') {
+        navigate('/login');
       }
     } finally {
       setLoading(false);
@@ -57,8 +47,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
-      
-      console.log('Login response:', response.data);
       
       if (response.data.success && response.data.data) {
         const { user } = response.data.data;
@@ -76,7 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     } catch (error: any) {
-      console.error('Login error:', error);
       toast.error(error.response?.data?.message || "Login failed");
       return null;
     } finally {
@@ -87,15 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
-      console.log('Attempting registration...');
       
       const response = await api.post("/auth/register", {
         name,
         email,
         password,
       });
-      
-      console.log('Registration response:', response.data);
       
       if (response.data.success && response.data.data) {
         const { user } = response.data.data;
@@ -113,7 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
       toast.error(error.response?.data?.message || "Registration failed");
       return null;
     } finally {
@@ -124,7 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('Attempting logout...');
       
       await api.post("/auth/logout");
       
@@ -132,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success("Logged out successfully");
       navigate("/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      // Still clear local state even if server logout fails
       setUser(null);
       toast.error("Logout failed");
       navigate("/login");

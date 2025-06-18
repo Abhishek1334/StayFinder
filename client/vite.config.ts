@@ -16,6 +16,14 @@ export default defineConfig({
     hmr: {
       overlay: true,
     },
+    proxy: {
+      '/api': {
+        target: 'https://stayfinder-1-ysvj.onrender.com',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      }
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'axios'],

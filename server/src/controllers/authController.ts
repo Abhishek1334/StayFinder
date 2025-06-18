@@ -53,8 +53,7 @@ export const register = async (
       secure: true,
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/',
-      domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+      path: '/'
     });
 
     // Remove password from response
@@ -101,8 +100,7 @@ export const login = async (
       secure: true,
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/',
-      domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+      path: '/'
     });
 
     // Remove password from response
@@ -180,6 +178,51 @@ export const updateProfile = async (
 
     return sendSuccess(res, { user }, 'Profile updated successfully');
   } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Refresh token
+// @route   POST /api/auth/refresh
+// @access  Public
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const token = req.cookies.token;
+    
+    if (!token) {
+      return sendError(res, 'No token provided', 401);
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string };
+    
+    // Get user
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return sendError(res, 'User not found', 404);
+    }
+
+    // Generate new token
+    const newToken = generateToken(user._id);
+
+    // Set cookie
+    res.cookie('token', newToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/'
+    });
+
+    return sendSuccess(res, { user }, 'Token refreshed successfully');
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return sendError(res, 'Invalid token', 401);
+    }
     next(error);
   }
 }; 
