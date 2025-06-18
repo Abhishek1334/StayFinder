@@ -15,8 +15,20 @@ interface AuthRequest extends Request {
 // Generate JWT Token
 const generateToken = (id: string): string => {
   return jwt.sign({ id }, env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: env.JWT_EXPIRES_IN,
   } as jwt.SignOptions);
+};
+
+// Set cookie with token
+const setTokenCookie = (res: Response, token: string) => {
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    path: '/',
+    domain: env.NODE_ENV === 'production' ? '.vercel.app' : undefined,
+  });
 };
 
 // @desc    Register user
@@ -48,12 +60,7 @@ export const register = async (
     const token = generateToken(user._id);
 
     // Set cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
+    setTokenCookie(res, token);
 
     // Remove password from response
     const userResponse = user.toObject() as { password?: string };
@@ -94,12 +101,7 @@ export const login = async (
     const token = generateToken(user._id);
 
     // Set cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
+    setTokenCookie(res, token);
 
     // Remove password from response
     const userResponse = user.toObject() as { password?: string };
@@ -142,7 +144,11 @@ export const logout = async (
 ): Promise<void> => {
   res.cookie('token', '', {
     httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     expires: new Date(0),
+    path: '/',
+    domain: env.NODE_ENV === 'production' ? '.vercel.app' : undefined,
   });
   return sendSuccess(res, {}, 'Logged out successfully');
 };

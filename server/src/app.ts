@@ -33,8 +33,9 @@ app.use(cors({
     "https://stayfinder-eta.vercel.app"
   ],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  exposedHeaders: ["Set-Cookie"],
 }));
 
 // Routes
@@ -42,6 +43,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentROutes);
+app.use("/api/webhooks", webhookRoutes);
 
 // Connect to MongoDB
 mongoose
