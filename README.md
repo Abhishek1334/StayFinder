@@ -3,8 +3,8 @@
 
 A full-stack web application inspired by Airbnb, built as an internship assignment. StayFinder allows users to list, search, and book properties for short-term or long-term stays. The project demonstrates end-to-end development skills across frontend, backend, and database layers.
 
-**Live Demo:** [https://stayfinder-eta.vercel.app/](https://stayfinder-eta.vercel.app/)
-
+*Live Demo:* [https://stayfinder-eta.vercel.app/](https://stayfinder-eta.vercel.app/)  
+*Portfolio:* [https://abhishek-rajoria.vercel.app/](https://abhishek-rajoria.vercel.app/)
 ---
 
 ## � Features
