@@ -118,5 +118,5 @@ export const uploadImage = async (file: File): Promise<ApiResponse<{ url: string
 
 export const getListingBookings = async (listingId: string): Promise<{ startDate: string; endDate: string; }[]> => {
   const response = await axios.get(`/listings/${listingId}/bookings`);
-  return response.data;
+  return response.data.data;
 }; 

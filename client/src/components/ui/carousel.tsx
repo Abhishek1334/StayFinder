@@ -10,10 +10,12 @@ const CarouselContext = React.createContext<{
   currentSlide: number
   totalSlides: number
   setCurrentSlide: (slide: number) => void
+  setTotalSlides: (total: number) => void
 }>({
   currentSlide: 0,
   totalSlides: 0,
   setCurrentSlide: () => {},
+  setTotalSlides: () => {},
 })
 
 export function Carousel({
@@ -30,12 +32,10 @@ export function Carousel({
         currentSlide,
         totalSlides,
         setCurrentSlide,
+        setTotalSlides,
       }}
     >
-      <div
-        className={cn("relative", className)}
-        {...props}
-      >
+      <div className={cn("relative", className)} {...props}>
         {children}
       </div>
     </CarouselContext.Provider>
@@ -47,7 +47,7 @@ export function CarouselContent({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { setTotalSlides } = React.useContext(CarouselContext)
+  const { currentSlide, setTotalSlides } = React.useContext(CarouselContext)
   const slides = React.Children.toArray(children)
 
   React.useEffect(() => {
@@ -55,11 +55,13 @@ export function CarouselContent({
   }, [slides.length, setTotalSlides])
 
   return (
-    <div
-      className={cn("relative overflow-hidden", className)}
-      {...props}
-    >
-      {children}
+    <div className={cn("relative overflow-hidden", className)} {...props}>
+      <div
+        className="flex transition-transform duration-300 ease-in-out"
+        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -71,7 +73,7 @@ export function CarouselItem({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("w-full", className)}
+      className={cn("w-full flex-shrink-0", className)}
       {...props}
     >
       {children}
@@ -85,15 +87,19 @@ export function CarouselPrevious({
 }: React.ComponentProps<typeof Button>) {
   const { currentSlide, setCurrentSlide, totalSlides } = React.useContext(CarouselContext)
 
+  const handlePrevious = () => {
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides)
+  }
+
   return (
     <Button
       variant="outline"
       size="icon"
       className={cn(
-        "absolute left-2 top-1/2 -translate-y-1/2",
+        "absolute left-2 top-1/2 -translate-y-1/2 z-10",
         className
       )}
-      onClick={() => setCurrentSlide((currentSlide - 1 + totalSlides) % totalSlides)}
+      onClick={handlePrevious}
       {...props}
     >
       <ChevronLeft className="h-4 w-4" />
@@ -108,15 +114,19 @@ export function CarouselNext({
 }: React.ComponentProps<typeof Button>) {
   const { currentSlide, setCurrentSlide, totalSlides } = React.useContext(CarouselContext)
 
+  const handleNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % totalSlides)
+  }
+
   return (
     <Button
       variant="outline"
       size="icon"
       className={cn(
-        "absolute right-2 top-1/2 -translate-y-1/2",
+        "absolute right-2 top-1/2 -translate-y-1/2 z-10",
         className
       )}
-      onClick={() => setCurrentSlide((currentSlide + 1) % totalSlides)}
+      onClick={handleNext}
       {...props}
     >
       <ChevronRight className="h-4 w-4" />

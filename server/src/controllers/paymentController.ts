@@ -23,14 +23,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Booking already paid' });
     }
 
-    // check if booking is confirmed
-    if (booking.status !== 'confirmed') {
-      console.log('❌ Booking not confirmed:', bookingId);
-      return res.status(400).json({ message: 'Booking not confirmed' });
-    }
-
     
-
     const listing = booking.listing as any;
     console.log('🏠 Creating session for listing:', listing.title);
 

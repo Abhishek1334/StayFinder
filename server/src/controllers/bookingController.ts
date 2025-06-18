@@ -211,3 +211,24 @@ export const getHostBookings = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: 'Error fetching host bookings' });
   }
 };
+
+
+export const getListingBookings = async (req: AuthRequest, res: Response) => {
+  try {
+    const { listingId } = req.params;
+
+    if (!listingId) {
+      return res.status(400).json({ message: "Listing ID is required" });
+    }
+
+    const bookings = await Booking.find({
+      listing: listingId,
+      status: { $ne: "cancelled" },
+    }).select("startDate endDate"); // Only return needed fields
+
+    return res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching listing bookings:", error);
+    return res.status(500).json({ message: "Failed to fetch listing bookings" });
+  }
+};

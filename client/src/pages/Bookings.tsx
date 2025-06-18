@@ -1,14 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { getMyBookings } from "@/api/bookingApi";
+import { toast } from "sonner";
+import { getMyBookings, cancelBooking } from "@/api/bookingApi";
 import { Booking } from "@/types/booking";
 import { PayNowButton } from "@/components/listing/PayNowButton";
-import { ApiResponse } from "@/types/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
-import { MapPin, Bed, Bath, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Bookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -16,18 +13,18 @@ export default function Bookings() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await getMyBookings();
-        setBookings(res.data.bookings);
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to fetch bookings");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchBookings = async () => {
+    try {
+      const res = await getMyBookings();
+      setBookings(res.data.bookings);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to fetch bookings");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBookings();
   }, []);
 
@@ -46,13 +43,12 @@ export default function Bookings() {
         toast.error("Payment failed. Please try again.");
       }
 
-      // Clean up the URL after showing toast
-      const newSearchParams = new URLSearchParams(location.search);
-      newSearchParams.delete("payment_status");
-      newSearchParams.delete("booking_id");
-      navigate(location.pathname + "?" + newSearchParams.toString(), { replace: true });
+      // Clean URL
+      params.delete("payment_status");
+      params.delete("booking_id");
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     }
-  }, [location.search]);
+  }, [location.search, navigate]);
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -69,6 +65,20 @@ export default function Bookings() {
       toast.error("Failed to cancel booking");
     }
   };
+
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-yellow-100 text-yellow-800";
+    }
+  };
+
+  const formatStatus = (status: string) =>
+    status.charAt(0).toUpperCase() + status.slice(1);
 
   if (isLoading) {
     return (
@@ -103,36 +113,51 @@ export default function Bookings() {
             key={booking._id}
             className="bg-card rounded-lg shadow-sm p-6 border"
           >
-            <h3 className="font-semibold mb-2">{booking.listing.title}</h3>
+            <h3 className="font-semibold mb-2">
+              {booking.listing?.title || "Untitled Listing"}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4">
               {new Date(booking.startDate).toLocaleDateString()} -{" "}
               {new Date(booking.endDate).toLocaleDateString()}
             </p>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">
-                ${booking.totalPrice}
-              </span>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">${booking.totalPrice}</span>
               <span
-                className={`text-sm px-2 py-1 rounded-full ${
-                  booking.status === "confirmed"
-                    ? "bg-green-100 text-green-800"
-                    : booking.status === "cancelled"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-yellow-100 text-yellow-800"
-                }`}
+                className={`text-sm px-2 py-1 rounded-full ${getStatusClass(
+                  booking.status
+                )}`}
               >
-                {booking.status.charAt(0).toUpperCase() +
-                  booking.status.slice(1)}
+                {formatStatus(booking.status)}
               </span>
             </div>
-            {booking.status === "confirmed" && booking.paymentStatus === "unpaid" && (
-              <div className="mt-4">
-                <PayNowButton bookingId={booking._id} totalPrice={booking.totalPrice} />
+             
+            <div className="flex gap-10 items-center justify-between">
+
+            {
+              booking.paymentStatus === "unpaid" && booking.status !== "cancelled" && (
+                <div>
+                  <PayNowButton
+                    bookingId={booking._id}
+                    totalPrice={booking.totalPrice}
+                  />
+                </div>
+              )}
+
+              {booking.status !== "cancelled" &&
+              <div>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleCancelBooking(booking._id)}
+                  size="sm"
+                >
+                  Cancel Booking
+                </Button>
               </div>
-            )}
+              }
+              </div>
           </div>
         ))}
       </div>
     </div>
   );
-} 
+}

@@ -5,7 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, Users, Loader2 } from "lucide-react";
-import { format, isWithinInterval } from "date-fns";
+import { format, isWithinInterval, isSameDay, startOfDay, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { createBooking } from "@/api/bookingApi";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +22,7 @@ interface BookedDate {
   endDate: string;
 }
 
-export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) => {
+export const BookingForm = ({ listingId, price, maxGuests, }: BookingFormProps) => {
   const navigate = useNavigate();
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -30,13 +30,17 @@ export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) =
   const [isLoading, setIsLoading] = useState(false);
   const [bookedDates, setBookedDates] = useState<BookedDate[]>([]);
 
+  // Fetch existing bookings for the listing
   useEffect(() => {
     const fetchBookedDates = async () => {
       try {
+        console.log(listingId);
         const response = await getListingBookings(listingId);
+        console.log(response);
         setBookedDates(response);
       } catch (error) {
         console.error("Failed to fetch booked dates:", error);
+        toast.error("Failed to fetch available dates");
       }
     };
     fetchBookedDates();
@@ -49,18 +53,20 @@ export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) =
 
   const totalPrice = nights * price;
 
+  // Check if a given date is within any of the booked intervals
   const isDateBooked = (date: Date): boolean => {
-    return bookedDates.some((booking) => {
-      const bookingStart = new Date(booking.startDate);
-      const bookingEnd = new Date(booking.endDate);
-      return isWithinInterval(date, { start: bookingStart, end: bookingEnd });
+    const normalized = startOfDay(date);
+    return bookedDates.some(({ startDate, endDate }) => {
+      const start = startOfDay(new Date(startDate));
+      const end = startOfDay(new Date(endDate));
+      return isWithinInterval(normalized, { start, end });
     });
   };
 
-  // Flatten booked intervals into all individual dates
+  // List of all individual booked days for styling
   const allBookedDays = bookedDates.flatMap(({ startDate, endDate }) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = startOfDay(new Date(startDate));
+    const end = startOfDay(new Date(endDate));
     const days: Date[] = [];
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       days.push(new Date(d));
@@ -68,6 +74,7 @@ export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) =
     return days;
   });
 
+  // Handle booking
   const handleBooking = async () => {
     if (!startDate || !endDate) {
       toast.error("Please select check-in and check-out dates");
@@ -76,16 +83,17 @@ export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) =
 
     setIsLoading(true);
     try {
-      await createBooking({
+      const response = await createBooking({
         listing: listingId,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         guests,
       });
 
-      
-      navigate("/bookings");
+      toast.success("Booking created successfully!");
+      navigate(`/bookings`);
     } catch (error: any) {
+      console.error("Booking failed:", error);
       toast.error(error.response?.data?.message || "Failed to create booking. Please try again.");
     } finally {
       setIsLoading(false);
@@ -128,13 +136,13 @@ export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) =
                   selected={startDate}
                   onSelect={setStartDate}
                   disabled={(date) =>
-                    date < new Date() ||
+                    date < startOfDay(new Date()) ||
                     isDateBooked(date) ||
                     (endDate ? date >= endDate : false)
                   }
                   modifiers={{ booked: allBookedDays }}
                   modifiersClassNames={{
-                    booked: "bg-red-100 text-red-600 line-through",
+                    booked: "bg-red-500 text-white hover:bg-red-600 hover:text-white",
                   }}
                   className="rounded-md border bg-white text-sm"
                   classNames={{
@@ -173,12 +181,12 @@ export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) =
                   disabled={(date) =>
                     !startDate ||
                     date <= startDate ||
-                    date < new Date() ||
+                    date < startOfDay(new Date()) ||
                     isDateBooked(date)
                   }
                   modifiers={{ booked: allBookedDays }}
                   modifiersClassNames={{
-                    booked: "bg-red-100 text-red-600 line-through",
+                    booked: "bg-red-500 text-white hover:bg-red-600 hover:text-white",
                   }}
                   className="rounded-md border bg-white text-sm"
                   classNames={{
@@ -233,8 +241,14 @@ export const BookingForm = ({ listingId, price, maxGuests }: BookingFormProps) =
           onClick={handleBooking}
           disabled={!startDate || !endDate || isLoading}
         >
-          {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {isLoading ? "Creating booking..." : "Book now"}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            "Book Now"
+          )}
         </Button>
       </CardContent>
     </Card>

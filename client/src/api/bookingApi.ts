@@ -28,8 +28,12 @@ export interface Booking {
 
 export const getMyBookings = async (): Promise<ApiResponse<{ bookings: Booking[] }>> => {
   const response = await axios.get('/bookings/me');
-  return response.data;
+  return {
+    success: true,
+    data: { bookings: response.data }, // wrap in `data` object if needed
+  };
 };
+
 
 export const createBooking = async (data: {
   listing: string;
@@ -58,3 +62,9 @@ export const updateBookingStatus = async (
   const response = await axios.patch(`/bookings/${id}/status`, { status });
   return response.data;
 };
+
+
+export const getListingBookings = async (listingId: string): Promise<{ startDate: string; endDate: string; }[]> => {
+  const response = await axios.get(`/listings/${listingId}/bookings`);
+  return response.data.data;
+}; 
