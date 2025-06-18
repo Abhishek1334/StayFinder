@@ -55,14 +55,14 @@ export const ListingDetails = () => {
     if (!startDate || !endDate || !listing) return;
 
     try {
-      const res = await createBooking({
+      await createBooking({
         listing: listing._id,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         guests,
       });
-        console.log(res);
-        toast.success("Booking successful!");
+      
+        toast.success("Booking successful ");
         setIsBookingModalOpen(false);
         navigate("/bookings");
     } catch (error: any) {
