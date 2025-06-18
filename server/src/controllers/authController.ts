@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { env } from '../config/env';
 import User from "../models/User";
 import { sendSuccess, sendError } from "../utils/responseHandler";
@@ -54,7 +54,7 @@ export const register = async (
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
-      domain: '.onrender.com'
+      domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     });
 
     // Remove password from response
@@ -72,60 +72,48 @@ export const register = async (
 // @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
-export const login = async (req: Request, res: Response) => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    // Check if user exists
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+      return sendError(res, 'Invalid credentials', 401);
     }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
+    // Check if password is correct
+    const isPasswordCorrect = await user.comparePassword(password);
+    if (!isPasswordCorrect) {
+      return sendError(res, 'Invalid credentials', 401);
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    // Generate token
+    const token = generateToken(user._id);
 
-    // Set cookie with proper configuration
-    res.cookie("token", token, {
+    // Set cookie
+    res.cookie('token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: "/",
-      domain: ".onrender.com"
+      path: '/',
+      domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: {
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      },
-    });
+    // Remove password from response
+    const userResponse = user.toObject() as { password?: string };
+    if (userResponse.password) {
+      delete userResponse.password;
+    }
+
+    return sendSuccess(res, { user: userResponse }, 'Login successful');
   } catch (error) {
-    console.error("Login error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    next(error);
   }
 };
 
@@ -158,7 +146,11 @@ export const logout = async (
 ): Promise<void> => {
   res.cookie('token', '', {
     httpOnly: true,
+    secure: true,
+    sameSite: 'none',
     expires: new Date(0),
+    path: '/',
+    domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
   });
   return sendSuccess(res, {}, 'Logged out successfully');
 };
@@ -189,64 +181,5 @@ export const updateProfile = async (
     return sendSuccess(res, { user }, 'Profile updated successfully');
   } catch (error) {
     next(error);
-  }
-};
-
-export const refreshToken = async (req: Request, res: Response) => {
-  try {
-    const token = req.cookies.token;
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "No token provided",
-      });
-    }
-
-    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Generate new token
-    const newToken = jwt.sign(
-      { userId: user._id },
-      env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
-
-    // Set new cookie
-    res.cookie("token", newToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: "/",
-      domain: ".onrender.com"
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Token refreshed successfully",
-      data: {
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Token refresh error:", error);
-    return res.status(401).json({
-      success: false,
-      message: "Invalid token",
-    });
   }
 }; 

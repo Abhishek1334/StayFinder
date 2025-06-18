@@ -33,11 +33,14 @@ export const env = {
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
   
   // Client
-  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
+  CLIENT_URL: process.env.NODE_ENV === 'production'
+    ? 'https://stayfinder-eta.vercel.app'
+    : 'http://localhost:5173',
   
   // Cookie
   COOKIE_SECRET: process.env.COOKIE_SECRET!,
   COOKIE_EXPIRES_IN: parseInt(process.env.COOKIE_EXPIRES_IN || "7", 10),
-
-  
+  COOKIE_DOMAIN: process.env.NODE_ENV === 'production'
+    ? '.onrender.com'
+    : undefined,
 } as const; 

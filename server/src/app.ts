@@ -17,37 +17,38 @@ dotenv.config();
 
 const app = express();
 
+// Webhook route must be registered BEFORE body parsing middleware
+app.use("/api/webhook", webhookRoutes);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
 // CORS configuration
 app.use(cors({
-  origin: "https://stayfinder-eta.vercel.app",
+  origin: env.NODE_ENV === 'production' 
+    ? 'https://stayfinder-eta.vercel.app'
+    : 'http://localhost:5173',
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  allowedHeaders: [
+    "Content-Type", 
+    "Authorization", 
+    "X-Requested-With",
+    "Accept",
+    "Origin"
+  ],
   exposedHeaders: ["Set-Cookie"],
-  maxAge: 600,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  maxAge: 600
 }));
-
-// Debug middleware for cookies
-app.use((req, _res, next) => {
-  console.log('Cookies:', req.cookies);
-  console.log('Headers:', req.headers);
-  next();
-});
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentROutes);
-app.use("/api/webhooks", webhookRoutes);
 
 // Connect to MongoDB
 mongoose
