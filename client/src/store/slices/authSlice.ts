@@ -15,6 +15,7 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  initialized: boolean;
 }
 
 const initialState: AuthState = {
@@ -23,6 +24,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   loading: false,
   error: null,
+  initialized: false,
 };
 
 // Async thunks
@@ -95,6 +97,9 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
     },
+    setInitialized: (state) => {
+      state.initialized = true;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -140,6 +145,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.error = null;
+        state.initialized = true;
       })
       .addCase(getMe.rejected, (state, action) => {
         state.loading = false;
@@ -147,6 +153,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
+        state.initialized = true;
       })
       // Logout
       .addCase(logout.fulfilled, (state) => {
@@ -158,5 +165,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, clearCredentials } = authSlice.actions;
+export const { setCredentials, clearCredentials, setInitialized } = authSlice.actions;
 export default authSlice.reducer; 
