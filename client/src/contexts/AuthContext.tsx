@@ -14,9 +14,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await api.get('/auth/me');
-      if (response.data.success) {
-        setUser(response.data.user);
+      console.log('Checking auth state...');
+      const response = await api.get("/auth/me");
+      console.log('Auth check response:', response.data);
+      
+      if (response.data.success && response.data.data) {
+        setUser(response.data.data);
       } else {
         setUser(null);
         if (window.location.pathname !== '/login') {
@@ -24,33 +27,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error: any) {
-      console.error('Auth check failed:', error);
+      console.error('Auth check error:', error);
       setUser(null);
       
-      // Only redirect if not already on login page
-      if (window.location.pathname !== '/login') {
-        navigate('/login');
-      }
-      
-      // Show appropriate error message
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        if (window.location.pathname !== '/login') {
+          navigate('/login');
+        }
+        toast.error("Session expired. Please login again.");
       } else if (error.response?.status === 403) {
-        toast.error('Access denied. Please login again.');
+        if (window.location.pathname !== '/login') {
+          navigate('/login');
+        }
+        toast.error("Access denied. Please login again.");
       } else {
-        toast.error('Authentication failed. Please try again.');
+        toast.error("Failed to verify authentication. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   }, [navigate]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Attempting login...');
       
       const response = await api.post("/auth/login", {
         email,
         password,
       });
+      
+      console.log('Login response:', response.data);
       
       if (response.data.success && response.data.data) {
         const { user } = response.data.data;
@@ -68,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error(error.response?.data?.message || "Login failed");
       return null;
     } finally {
@@ -78,12 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
+      console.log('Attempting registration...');
       
       const response = await api.post("/auth/register", {
         name,
         email,
         password,
       });
+      
+      console.log('Registration response:', response.data);
       
       if (response.data.success && response.data.data) {
         const { user } = response.data.data;
@@ -101,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
     } catch (error: any) {
+      console.error('Registration error:', error);
       toast.error(error.response?.data?.message || "Registration failed");
       return null;
     } finally {
@@ -111,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('Attempting logout...');
       
       await api.post("/auth/logout");
       
@@ -118,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success("Logged out successfully");
       navigate("/login");
     } catch (error) {
-      // Still clear local state even if server logout fails
+      console.error('Logout error:', error);
       setUser(null);
       toast.error("Logout failed");
       navigate("/login");
@@ -127,25 +141,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate]);
 
-  // Check auth status on mount
+  // Check auth state on mount
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Check auth status periodically
+  // Add error handling for network issues
   useEffect(() => {
-    const interval = setInterval(checkAuth, 5 * 60 * 1000); // Check every 5 minutes
-    return () => clearInterval(interval);
-  }, [checkAuth]);
+    const handleOffline = () => {
+      toast.error("You are offline. Please check your internet connection.");
+    };
 
-  // Handle network status changes
-  useEffect(() => {
     const handleOnline = () => {
       checkAuth();
     };
 
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [checkAuth]);
+
+  // Check auth state periodically
+  useEffect(() => {
+    const interval = setInterval(checkAuth, 5 * 60 * 1000); // Check every 5 minutes
+    return () => clearInterval(interval);
   }, [checkAuth]);
 
   const value = {

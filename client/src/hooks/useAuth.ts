@@ -57,6 +57,7 @@ export const useAuth = () => {
   const handleCheckAuth = useCallback(async () => {
     try {
       await dispatch(checkAuth()).unwrap();
+      
     } catch (error: unknown) {
       // Silent fail - user is not authenticated
     }

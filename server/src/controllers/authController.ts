@@ -54,20 +54,7 @@ export const register = async (
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
-      domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
-    });
-
-    // Debug log
-    console.log('Setting cookie:', {
-      token: token.substring(0, 10) + '...',
-      options: {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        path: '/',
-        domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
-      }
+      domain: '.onrender.com'
     });
 
     // Remove password from response
@@ -115,20 +102,7 @@ export const login = async (
       sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
-      domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
-    });
-
-    // Debug log
-    console.log('Setting cookie:', {
-      token: token.substring(0, 10) + '...',
-      options: {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        path: '/',
-        domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
-      }
+      domain: '.onrender.com'
     });
 
     // Remove password from response

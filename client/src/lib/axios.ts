@@ -1,57 +1,49 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: 'https://stayfinder-1-ysvj.onrender.com/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest'
-  }
+  },
 });
 
-// Debug helper to check if cookies are being sent
-const debugCookies = () => {
-  console.log('Cookies present:', document.cookie);
-};
-
-// Request interceptor
+// Debug interceptor for requests
 api.interceptors.request.use(
   (config) => {
-    // Ensure credentials are included
-    config.withCredentials = true;
-    
-    // Debug log
-    console.log('Making request to:', config.url);
-    debugCookies();
-    
+    console.log('Request Config:', {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      withCredentials: config.withCredentials
+    });
     return config;
   },
   (error) => {
-    console.error('Request error:', error);
+    console.error('Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor
+// Debug interceptor for responses
 api.interceptors.response.use(
   (response) => {
-    // Debug log
-    console.log('Response received:', {
-      url: response.config.url,
+    console.log('Response:', {
       status: response.status,
-      headers: response.headers
+      headers: response.headers,
+      data: response.data
     });
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
-
-    // Debug log
-    console.error('Response error:', {
-      url: originalRequest?.url,
+    console.error('Response Error:', {
       status: error.response?.status,
-      data: error.response?.data
+      data: error.response?.data,
+      headers: error.response?.headers
     });
+
+    const originalRequest = error.config;
 
     // Handle 401 errors (unauthorized)
     if (error.response?.status === 401 && !originalRequest._retry) {
