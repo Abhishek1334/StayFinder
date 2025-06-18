@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { store } from '../store/store';
+
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://stayfinder-1-ysvj.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   withCredentials: true, // Important for cookies
   headers: {
     'Content-Type': 'application/json',
@@ -12,13 +12,7 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const state = store.getState();
-    const token = state.auth.token;
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
+    // You can add any request modifications here
     return config;
   },
   (error) => {
@@ -32,26 +26,27 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If the error is 401 and we haven't retried yet
+    // Handle 401 errors (unauthorized)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
+      
       try {
         // Try to refresh the token
         const response = await api.post('/auth/refresh');
-        const { token } = response.data;
-
-        // Update the token in the store
-        store.dispatch({ type: 'auth/setCredentials', payload: { token } });
-
-        // Retry the original request with the new token
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-        return api(originalRequest);
+        if (response.data.success) {
+          return api(originalRequest);
+        }
       } catch (refreshError) {
-        // If refresh fails, clear the auth state
-        store.dispatch({ type: 'auth/clearCredentials' });
-        return Promise.reject(refreshError);
+        // If refresh fails and we're not on the login page, redirect to login
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
+    }
+
+    // Don't show error toast for 401 errors on login page
+    if (error.response?.status === 401 && window.location.pathname === '/login') {
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);
