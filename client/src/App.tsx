@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { RootState } from './store/store';
 import { getMe, setInitialized } from './store/slices/authSlice';
 import { Toaster } from './components/ui/toaster';
-import { useToast } from './components/ui/use-toast';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -20,7 +19,6 @@ import NotFound from './pages/NotFound';
 
 function App() {
   const dispatch = useDispatch();
-  const { toast } = useToast();
   const { isAuthenticated, loading, token, initialized } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -54,7 +52,7 @@ function App() {
         {/* Public Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
-          <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" />} />
+          <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/login" />} />
         </Route>
 
         {/* Protected Routes */}

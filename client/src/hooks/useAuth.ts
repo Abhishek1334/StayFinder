@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { RootState, AppDispatch } from '@/store';
-import { login, register, logout, checkAuth, clearError } from '@/store/slices/authSlice';
+import { RootState } from '../store/store';
+import { login, register, logout, getMe } from '../store/slices/authSlice';
 import { toast } from 'sonner';
 
 export interface User {
@@ -14,57 +14,55 @@ export interface User {
 }
 
 export const useAuth = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, isAuthenticated, loading, error } = useSelector((state: RootState) => state.auth);
 
-  const handleLogin = useCallback(
-    async (email: string, password: string) => {
+  const handleLogin = async (credentials: { email: string; password: string }) => {
     try {
-        await dispatch(login({ email, password })).unwrap();
-        toast.success('Login successful');
-        navigate('/');
-      } catch (error: unknown) {
-        toast.error(error instanceof Error ? error.message : 'Login failed');
+      await dispatch(login(credentials)).unwrap();
+      toast.success('Login successful');
+      navigate('/');
+      return true;
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Login failed');
+      return false;
     }
-    },
-    [dispatch, navigate]
-  );
+  };
 
-  const handleRegister = useCallback(
-    async (name: string, email: string, password: string) => {
+  const handleRegister = async (userData: { name: string; email: string; password: string }) => {
     try {
-        await dispatch(register({ name, email, password })).unwrap();
-        toast.success('Registration successful');
-        navigate('/');
-      } catch (error: unknown) {
-        toast.error(error instanceof Error ? error.message : 'Registration failed');
+      await dispatch(register(userData)).unwrap();
+      toast.success('Registration successful');
+      navigate('/');
+      return true;
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Registration failed');
+      return false;
     }
-    },
-    [dispatch, navigate]
-  );
+  };
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = async () => {
     try {
       await dispatch(logout()).unwrap();
       toast.success('Logged out successfully');
       navigate('/login');
+      return true;
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Logout failed');
+      return false;
     }
-  }, [dispatch, navigate]);
+  };
 
-  const handleCheckAuth = useCallback(async () => {
+  const checkAuth = async () => {
     try {
-      await dispatch(checkAuth()).unwrap();
+      await dispatch(getMe()).unwrap();
+      return true;
     } catch (error: unknown) {
       // Silent fail - user is not authenticated
+      return false;
     }
-  }, [dispatch]);
-
-  const handleClearError = useCallback(() => {
-    dispatch(clearError());
-  }, [dispatch]);
+  };
 
   return {
     user,
@@ -74,7 +72,6 @@ export const useAuth = () => {
     login: handleLogin,
     register: handleRegister,
     logout: handleLogout,
-    checkAuth: handleCheckAuth,
-    clearError: handleClearError,
+    checkAuth,
   };
 }; 
