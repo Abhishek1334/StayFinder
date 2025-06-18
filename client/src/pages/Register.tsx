@@ -86,6 +86,7 @@ export default function Register() {
                   }
                 }}
                 required
+                autoComplete="name"
                 className={errors.name ? 'border-red-500' : ''}
               />
               {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
@@ -106,6 +107,7 @@ export default function Register() {
                   }
                 }}
                 required
+                autoComplete="email"
                 className={errors.email ? 'border-red-500' : ''}
               />
               {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
@@ -126,6 +128,7 @@ export default function Register() {
                   }
                 }}
                 required
+                autoComplete="new-password"
                 className={errors.password ? 'border-red-500' : ''}
               />
               {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
