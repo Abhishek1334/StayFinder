@@ -30,15 +30,13 @@ app.use(morgan("dev"));
 app.use(cors({
   origin: [
     process.env.CLIENT_URL || "http://localhost:5173",
-    "https://stayfinder-eta.vercel.app",
-    "https://stayfinder.vercel.app"
+    "https://stayfinder-eta.vercel.app"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Set-Cookie"],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  maxAge: 600
 }));
 
 // Routes

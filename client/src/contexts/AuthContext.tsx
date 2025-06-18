@@ -20,21 +20,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.data.data);
       } else {
         setUser(null);
+        if (window.location.pathname !== '/login') {
+          navigate('/login');
+        }
       }
     } catch (error: any) {
       setUser(null);
       
       if (error.response?.status === 401) {
+        if (window.location.pathname !== '/login') {
+          navigate('/login');
+        }
         toast.error("Session expired. Please login again.");
       } else if (error.response?.status === 403) {
+        if (window.location.pathname !== '/login') {
+          navigate('/login');
+        }
         toast.error("Access denied. Please login again.");
       } else {
+        console.error('Auth check error:', error);
         toast.error("Failed to verify authentication. Please try again.");
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
