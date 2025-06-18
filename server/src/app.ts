@@ -28,7 +28,10 @@ app.use(morgan("dev"));
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: [
+    process.env.CLIENT_URL || "http://localhost:5173",
+    "https://stayfinder-eta.vercel.app"
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
