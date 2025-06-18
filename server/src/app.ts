@@ -28,9 +28,11 @@ app.use(cors({
   origin: "https://stayfinder-eta.vercel.app",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   exposedHeaders: ["Set-Cookie"],
-  maxAge: 600
+  maxAge: 600,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 // Debug middleware for cookies
