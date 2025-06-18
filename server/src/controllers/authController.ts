@@ -50,10 +50,10 @@ export const register = async (
     // Set cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined,
+      secure: true, // Always true in production
+      sameSite: 'none', // Required for cross-origin requests
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined, // Set domain in production
       path: '/',
     });
 
@@ -98,10 +98,10 @@ export const login = async (
     // Set cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined,
+      secure: true, // Always true in production
+      sameSite: 'none', // Required for cross-origin requests
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined, // Set domain in production
       path: '/',
     });
 
@@ -146,6 +146,10 @@ export const logout = async (
 ): Promise<void> => {
   res.cookie('token', '', {
     httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined,
+    path: '/',
     expires: new Date(0),
   });
   return sendSuccess(res, {}, 'Logged out successfully');
