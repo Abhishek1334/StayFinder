@@ -14,25 +14,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
       const response = await api.get("/auth/me");
       
       if (response.data.success && response.data.data) {
         setUser(response.data.data);
       } else {
         setUser(null);
-        localStorage.removeItem("token");
-        toast.error(response.data.message || "Session expired");
       }
     } catch (error: any) {
       setUser(null);
-      localStorage.removeItem("token");
       
       if (error.response?.status === 401) {
         toast.error("Session expired. Please login again.");
@@ -56,19 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (response.data.success && response.data.data) {
-        const { user, token } = response.data.data;
+        const { user } = response.data.data;
         
         if (!user) {
           toast.error("Invalid response from server");
           return null;
         }
 
-        if (!token) {
-          toast.error("Authentication failed");
-          return null;
-        }
-
-        localStorage.setItem("token", token);
         setUser(user);
         toast.success(response.data.message || "Login successful");
         return user;
@@ -95,19 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (response.data.success && response.data.data) {
-        const { user, token } = response.data.data;
+        const { user } = response.data.data;
         
         if (!user) {
           toast.error("Invalid response from server");
           return null;
         }
 
-        if (!token) {
-          toast.error("Authentication failed");
-          return null;
-        }
-
-        localStorage.setItem("token", token);
         setUser(user);
         toast.success(response.data.message || "Registration successful");
         return user;
@@ -129,13 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       await api.post("/auth/logout");
       
-      localStorage.removeItem("token");
       setUser(null);
       toast.success("Logged out successfully");
       navigate("/login");
     } catch (error) {
       // Still clear local state even if server logout fails
-      localStorage.removeItem("token");
       setUser(null);
       toast.error("Logout failed");
       navigate("/login");
@@ -144,14 +120,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate]);
 
-  // Check auth state on mount and when token changes
+  // Check auth state on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      checkAuth();
-    } else {
-      setLoading(false);
-    }
+    checkAuth();
   }, [checkAuth]);
 
   // Add error handling for network issues
@@ -161,10 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const handleOnline = () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        checkAuth();
-      }
+      checkAuth();
     };
 
     window.addEventListener("offline", handleOffline);
@@ -176,17 +144,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [checkAuth]);
 
-  // Check token expiration periodically
+  // Check auth state periodically
   useEffect(() => {
-    const checkTokenExpiration = () => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        checkAuth();
-      }
-    };
-
-    const interval = setInterval(checkTokenExpiration, 5 * 60 * 1000); // Check every 5 minutes
-
+    const interval = setInterval(checkAuth, 5 * 60 * 1000); // Check every 5 minutes
     return () => clearInterval(interval);
   }, [checkAuth]);
 

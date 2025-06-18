@@ -40,6 +40,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://stayfinder-1-ysvj.onrender.com"
+    "VITE_API_URL": "https://stayfinder-1-ysvj.onrender.com/api"
   }
 } 
