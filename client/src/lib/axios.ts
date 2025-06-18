@@ -1,8 +1,8 @@
 import axios from 'axios';
-
+import { store } from '../store/store';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://stayfinder-1-ysvj.onrender.com/api',
   withCredentials: true, // Important for cookies
   headers: {
     'Content-Type': 'application/json',
@@ -12,7 +12,13 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // You can add any request modifications here
+    const state = store.getState();
+    const token = state.auth.token;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => {
@@ -26,13 +32,25 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 errors (unauthorized)
+    // If the error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
-      // Redirect to login if not already there
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+
+      try {
+        // Try to refresh the token
+        const response = await api.post('/auth/refresh');
+        const { token } = response.data;
+
+        // Update the token in the store
+        store.dispatch({ type: 'auth/setCredentials', payload: { token } });
+
+        // Retry the original request with the new token
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, clear the auth state
+        store.dispatch({ type: 'auth/clearCredentials' });
+        return Promise.reject(refreshError);
       }
     }
 
