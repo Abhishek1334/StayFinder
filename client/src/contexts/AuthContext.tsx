@@ -14,10 +14,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await api.get("/auth/me");
-      
-      if (response.data.success && response.data.data) {
-        setUser(response.data.data);
+      const response = await api.get('/auth/me');
+      if (response.data.success) {
+        setUser(response.data.user);
       } else {
         setUser(null);
         if (window.location.pathname !== '/login') {
@@ -25,24 +24,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error: any) {
+      console.error('Auth check failed:', error);
       setUser(null);
       
-      if (error.response?.status === 401) {
-        if (window.location.pathname !== '/login') {
-          navigate('/login');
-        }
-        toast.error("Session expired. Please login again.");
-      } else if (error.response?.status === 403) {
-        if (window.location.pathname !== '/login') {
-          navigate('/login');
-        }
-        toast.error("Access denied. Please login again.");
-      } else {
-        console.error('Auth check error:', error);
-        toast.error("Failed to verify authentication. Please try again.");
+      // Only redirect if not already on login page
+      if (window.location.pathname !== '/login') {
+        navigate('/login');
       }
-    } finally {
-      setLoading(false);
+      
+      // Show appropriate error message
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+      } else if (error.response?.status === 403) {
+        toast.error('Access denied. Please login again.');
+      } else {
+        toast.error('Authentication failed. Please try again.');
+      }
     }
   }, [navigate]);
 
@@ -130,34 +127,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [navigate]);
 
-  // Check auth state on mount
+  // Check auth status on mount
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Add error handling for network issues
+  // Check auth status periodically
   useEffect(() => {
-    const handleOffline = () => {
-      toast.error("You are offline. Please check your internet connection.");
-    };
+    const interval = setInterval(checkAuth, 5 * 60 * 1000); // Check every 5 minutes
+    return () => clearInterval(interval);
+  }, [checkAuth]);
 
+  // Handle network status changes
+  useEffect(() => {
     const handleOnline = () => {
       checkAuth();
     };
 
-    window.addEventListener("offline", handleOffline);
-    window.addEventListener("online", handleOnline);
-
-    return () => {
-      window.removeEventListener("offline", handleOffline);
-      window.removeEventListener("online", handleOnline);
-    };
-  }, [checkAuth]);
-
-  // Check auth state periodically
-  useEffect(() => {
-    const interval = setInterval(checkAuth, 5 * 60 * 1000); // Check every 5 minutes
-    return () => clearInterval(interval);
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, [checkAuth]);
 
   const value = {
