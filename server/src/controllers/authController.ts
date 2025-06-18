@@ -51,10 +51,9 @@ export const register = async (
     res.cookie('token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/',
-      domain: env.NODE_ENV === 'production' ? '.vercel.app' : undefined
+      path: '/'
     });
 
     // Remove password from response
@@ -99,10 +98,9 @@ export const login = async (
     res.cookie('token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/',
-      domain: env.NODE_ENV === 'production' ? '.vercel.app' : undefined
+      path: '/'
     });
 
     // Remove password from response
@@ -147,10 +145,10 @@ export const logout = async (
   res.cookie('token', '', {
     httpOnly: true,
     secure: true,
-    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'none',
     expires: new Date(0),
     path: '/',
-    domain: env.NODE_ENV === 'production' ? '.vercel.app' : undefined
+    domain: env.NODE_ENV === 'production' ? '.onrender.com' : undefined
   });
   return sendSuccess(res, {}, 'Logged out successfully');
 };
@@ -215,10 +213,9 @@ export const refreshToken = async (
     res.cookie('token', newToken, {
       httpOnly: true,
       secure: true,
-      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/',
-      domain: env.NODE_ENV === 'production' ? '.vercel.app' : undefined
+      path: '/'
     });
 
     return sendSuccess(res, { user }, 'Token refreshed successfully');
