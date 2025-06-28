@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Clock, X } from 'lucide-react';
 
 interface FormErrors {
   name?: string;
@@ -16,7 +17,16 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const { register, loading, error: authError } = useAuth();
+  const [showWakeUpBanner, setShowWakeUpBanner] = useState(true);
+  const { register, loading, error: authError, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -61,8 +71,39 @@ export default function Register() {
     }
   };
 
+  // Don't render the register form if user is authenticated
+  if (isAuthenticated) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative">
+      {/* Backend Wake-up Notification Banner */}
+      {showWakeUpBanner && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-lg mx-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 relative">
+            <button
+              onClick={() => setShowWakeUpBanner(false)}
+              className="absolute top-2 right-2 text-blue-500 hover:text-blue-700"
+              aria-label="Close notification"
+            >
+              <X size={18} />
+            </button>
+            <div className="flex items-start space-x-3">
+              <Clock className="text-blue-500 mt-0.5" size={20} />
+              <div>
+                <h3 className="font-semibold text-blue-800 mb-1">
+                  Backend Initializing
+                </h3>
+                <p className="text-blue-700 text-sm">
+                  If registration is slow, the backend server may be waking up from sleep. Please wait 10-15 seconds and try again.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Register</CardTitle>
