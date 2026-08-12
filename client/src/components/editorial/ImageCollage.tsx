@@ -64,12 +64,12 @@ export function ImageCollage({ images, alt }: ImageCollageProps) {
         </button>
       </div>
 
-      {/* Desktop: 1 large + 2x2 small */}
-      <div className="hidden md:grid grid-cols-4 grid-rows-2 h-[480px] gap-2 rounded-sm overflow-hidden">
+      {/* Desktop: 1 large + up to 4 small (2x2). Single-image listings span full width (no empty grid). */}
+      <div className={`hidden md:grid h-[480px] gap-2 rounded-sm overflow-hidden ${grid.length === 1 ? "grid-cols-1 grid-rows-1" : "grid-cols-4 grid-rows-2"}`}>
         <button
           type="button"
           onClick={() => openAt(0)}
-          className="col-span-2 row-span-2 group relative bg-bone overflow-hidden"
+          className={`group relative bg-bone overflow-hidden ${grid.length === 1 ? "col-span-1 row-span-1" : "col-span-2 row-span-2"}`}
         >
           <img
             src={grid[0]}
@@ -80,22 +80,19 @@ export function ImageCollage({ images, alt }: ImageCollageProps) {
           <div className="absolute inset-0 bg-gradient-to-tr from-ink/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </button>
 
-        {[1, 2, 3, 4].map((i) => (
+        {grid.slice(1).map((src, i) => (
           <button
             key={i}
             type="button"
-            onClick={() => openAt(i)}
-            disabled={!grid[i]}
-            className="group relative bg-bone overflow-hidden disabled:opacity-60"
+            onClick={() => openAt(i + 1)}
+            className="group relative bg-bone overflow-hidden"
           >
-            {grid[i] ? (
-              <img
-                src={grid[i]}
-                alt={`${alt} — ${i + 1}`}
-                loading="lazy"
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-              />
-            ) : null}
+            <img
+              src={src}
+              alt={`${alt} — ${i + 2}`}
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            />
           </button>
         ))}
 

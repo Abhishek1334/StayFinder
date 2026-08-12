@@ -124,3 +124,6 @@ Thumbs.db
 /*.jpg
 /*.jpeg
 /*.webp
+
+# Seed/test account credentials
+SEED_ACCOUNTS.txt
