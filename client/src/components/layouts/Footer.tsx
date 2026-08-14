@@ -77,7 +77,7 @@ const Footer = () => {
             </ul>
             <div className="flex gap-4 mt-6">
               <a
-                href="https://github.com/Abhishek1334/StayFinder"
+                href="https://github.com/AbhishekRajoria/StayFinder"
                 target="_blank"
                 rel="noreferrer"
                 className="h-10 w-10 rounded-full border border-ink/15 hover:border-ink flex items-center justify-center transition-colors"
